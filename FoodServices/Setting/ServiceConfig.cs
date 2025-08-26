@@ -3,6 +3,6 @@
 
 	public class ServiceConfig
 	{
-		public int IntervalMinutes { get; set; }
+		public int IntervalHours { get; set; }
 	}
 }

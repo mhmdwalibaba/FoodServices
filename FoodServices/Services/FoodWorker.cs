@@ -18,7 +18,7 @@
 		private readonly IServiceProvider _services;
 		private readonly HttpClient _httpClient;
 		private readonly LoginSetting _loginSetting;
-		private readonly int _intervalMinutes;
+		private readonly int _intervalHours;
 
 		public FoodWorker(
 			ILogger<FoodWorker> logger,
@@ -31,7 +31,7 @@
 			_services = services;
 			_httpClient = httpClient;
 			_loginSetting = loginSetting.Value;
-			_intervalMinutes = config.Value.IntervalMinutes;
+			_intervalHours = config.Value.IntervalHours;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,8 +52,8 @@
 					_logger.LogError(ex, "❌ Error while fetching food services");
 				}
 
-				_logger.LogInformation($"⏳ Sleeping {_intervalMinutes} minutes...");
-				await Task.Delay(TimeSpan.FromMinutes(_intervalMinutes), stoppingToken);
+				_logger.LogInformation($"⏳ Sleeping {_intervalHours} Hours...");
+				await Task.Delay(TimeSpan.FromHours(_intervalHours), stoppingToken);
 			}
 		}
 
@@ -63,7 +63,7 @@
 			if (string.IsNullOrEmpty(token)) return;
 
 			var serviceType = await db.serviceTypes.FirstOrDefaultAsync(s =>
-				s.ServiceTypeName.Equals("Food", StringComparison.OrdinalIgnoreCase));
+				s.ServiceTypeName=="food" || s.ServiceTypeName=="Food");
 
 			if (serviceType == null || string.IsNullOrEmpty(serviceType.ServiceTypeAddress))
 			{
@@ -86,6 +86,13 @@
 
 			if (apiResponse?.Result != null)
 			{
+				var existingServices = await db.services.ToListAsync();
+				if (existingServices.Any())
+				{
+					db.services.RemoveRange(existingServices);
+					await db.SaveChangesAsync();
+					_logger.LogInformation("🗑️ Existing services cleared from database");
+				}
 				var services = new List<Service>();
 				foreach (var meal in apiResponse.Result)
 				{
