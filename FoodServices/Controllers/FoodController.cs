@@ -94,11 +94,10 @@ namespace FoodServices.Controllers
 
 		
 	
-			public async Task<string> GetJwtKey(LoginSetting loginsetting, HttpClient client)
+	    public async Task<string> GetJwtKey(LoginSetting loginsetting, HttpClient client)
 		{
 			var loginUrl = $"{loginsetting.Url}?username={loginsetting.UserName}&password={loginsetting.Password}";
 
-			// ارسال درخواست GET
 			var response = await client.GetAsync(loginUrl);
 
 			if (response.IsSuccessStatusCode)
