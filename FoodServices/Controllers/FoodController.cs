@@ -1,6 +1,7 @@
 ﻿using FoodServices.Entities;
 using FoodServices.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Identity.Client;
 using MRKHServices.Persistence.Entites;
@@ -25,7 +26,23 @@ namespace FoodServices.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Get()
 		{
-			var response = await _httpClient.GetAsync("http://localhost:5287/api/food");
+			var address="";
+			int serviceTypeID = 0;
+			var serviceType = await _db.serviceTypes.FirstOrDefaultAsync(s => s.ServiceTypeName == "Food" || s.ServiceTypeName == "food");
+			if (serviceType == null)
+			{
+				return NoContent();
+			}
+		
+		    address=serviceType.ServiceTypeAddress;
+			serviceTypeID = serviceType.ServiceTypeID;
+
+			if (address == null || address=="")
+			{
+				return NoContent();
+			}
+	        var response = await _httpClient.GetAsync(address);
+			
 			response.EnsureSuccessStatusCode();
 
 			var json = await response.Content.ReadAsStringAsync();
@@ -42,7 +59,7 @@ namespace FoodServices.Controllers
 					{
 						foreach (var item in menu.MealItems)
 						{
-							services.Add(item.ToEntity(meal.MealName, menu.Name));
+							services.Add(item.ToEntity(meal.MealName, menu.Name,serviceTypeID));
 						}
 					}
 				}
@@ -50,7 +67,7 @@ namespace FoodServices.Controllers
 				_db.services.AddRange(services);
 				await _db.SaveChangesAsync();
 			}
-			return Ok();
+			return Ok(new {Message ="Services Food Added To Table Service in db OK"});
 		}
 
 		

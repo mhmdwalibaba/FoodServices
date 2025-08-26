@@ -6,11 +6,11 @@ namespace FoodServices.Entities
 {
 	public static class ServiceMapper
 	{
-		public static Service ToEntity(this ServiceDto dto, string mealName, string menuName)
+		public static Service ToEntity(this ServiceDto dto, string mealName, string menuName,int serviceTypeID)
 		{
 			return new Service
 			{
-				ServiceTypeID = 1, 
+				ServiceTypeID = serviceTypeID, 
 				ServiceName = dto.Description,   
 				ServiceTitle = menuName,         
 				ServiceDesc = mealName, 

@@ -36,7 +36,7 @@ namespace FoodServices.Services
 					{
 						foreach (var item in menu.MealItems)
 						{
-							services.Add(item.ToEntity(meal.MealName, menu.Name));
+							services.Add(item.ToEntity(meal.MealName, menu.Name,1));
 						}
 					}
 				}
