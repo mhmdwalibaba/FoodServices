@@ -1,13 +1,16 @@
 ﻿using FoodServices.Entities;
 using FoodServices.Model;
+using FoodServices.Setting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 using MRKHServices.Persistence.Entites;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace FoodServices.Controllers
 {
@@ -17,59 +20,101 @@ namespace FoodServices.Controllers
 	{
 		private readonly AppDbContext _db;
 		private readonly HttpClient _httpClient;
-		public FoodController(AppDbContext dbContext,HttpClient httpClient)
+		private readonly LoginSetting _loginSetting;
+		public FoodController(AppDbContext dbContext, HttpClient httpClient, IOptions<LoginSetting> loginSetting)
 		{
-			_db=dbContext;
+			_db = dbContext;
 			_httpClient = httpClient;
+			_loginSetting = loginSetting.Value;
 		}
 		// GET: api/<FoodController>
 		[HttpGet]
 		public async Task<IActionResult> Get()
 		{
-			var address="";
+			var address = "";
 			int serviceTypeID = 0;
 			var serviceType = await _db.serviceTypes.FirstOrDefaultAsync(s => s.ServiceTypeName == "Food" || s.ServiceTypeName == "food");
 			if (serviceType == null)
 			{
 				return NoContent();
 			}
-		
-		    address=serviceType.ServiceTypeAddress;
+
+
+			address = serviceType.ServiceTypeAddress;
 			serviceTypeID = serviceType.ServiceTypeID;
 
-			if (address == null || address=="")
+			if (address == null || address == "")
 			{
 				return NoContent();
 			}
-	        var response = await _httpClient.GetAsync(address);
-			
-			response.EnsureSuccessStatusCode();
+			string token = await GetJwtKey(_loginSetting, _httpClient);
+			token = token.Trim();
+			var request = new HttpRequestMessage(HttpMethod.Get, address);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-			var json = await response.Content.ReadAsStringAsync();
+			Console.WriteLine("Request to: " + address);
+			Console.WriteLine("Auth Header: " + request.Headers.Authorization);
 
-			var apiResponse = JsonConvert.DeserializeObject<ApiResponseDto>(json);
+			var response = await _httpClient.SendAsync(request);
 
-			if (apiResponse?.Result != null)
+			if (response.IsSuccessStatusCode)
 			{
-				var services = new List<Service>();
+				var json = await response.Content.ReadAsStringAsync();
+				var apiResponse = JsonConvert.DeserializeObject<ApiResponseDto>(json);
 
-				foreach (var meal in apiResponse.Result)
+				if (apiResponse?.Result != null)
 				{
-					foreach (var menu in meal.MenuList)
+					var services = new List<Service>();
+
+					foreach (var meal in apiResponse.Result)
 					{
-						foreach (var item in menu.MealItems)
+						foreach (var menu in meal.MenuList)
 						{
-							services.Add(item.ToEntity(meal.MealName, menu.Name,serviceTypeID));
+							foreach (var item in menu.MealItems)
+							{
+								services.Add(item.ToEntity(meal.MealName, menu.Name, serviceTypeID));
+							}
 						}
 					}
-				}
 
-				_db.services.AddRange(services);
-				await _db.SaveChangesAsync();
+					_db.services.AddRange(services);
+					await _db.SaveChangesAsync();
+				}
+				return Ok(new { Message = "Services Food Added To Table Service in db OK" });
 			}
-			return Ok(new {Message ="Services Food Added To Table Service in db OK"});
+			else
+			{
+				var errorContent = await response.Content.ReadAsStringAsync();
+				return StatusCode((int)response.StatusCode, new { Message = "token is not valid", Detail = errorContent });
+			}
+
 		}
 
+
+
 		
+	
+			public async Task<string> GetJwtKey(LoginSetting loginsetting, HttpClient client)
+		{
+			var loginUrl = $"{loginsetting.Url}?username={loginsetting.UserName}&password={loginsetting.Password}";
+
+			// ارسال درخواست GET
+			var response = await client.GetAsync(loginUrl);
+
+			if (response.IsSuccessStatusCode)
+			{
+				var content = await response.Content.ReadAsStringAsync();
+
+				
+				var json = JObject.Parse(content);
+				var token = json["token"].ToString();
+
+				Console.WriteLine("✅ توکن دریافت شد:");
+				Console.WriteLine(token);
+
+				return token;
+			}
+			return "";
+		}
 	}
 }
