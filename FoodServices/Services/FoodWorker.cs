@@ -10,6 +10,7 @@
 	using MRKHServices.Persistence.Entites;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
+	using System.Buffers.Text;
 	using System.Net.Http.Headers;
 
 	public class FoodWorker : BackgroundService
@@ -59,8 +60,10 @@
 
 		private async Task FetchFoodServicesAsync(AppDbContext db)
 		{
-			string token = await GetJwtKey(_loginSetting, _httpClient);
-			if (string.IsNullOrEmpty(token)) return;
+			//donot use jwt token
+
+			//string token = await GetJwtKey(_loginSetting, _httpClient);
+			//if (string.IsNullOrEmpty(token)) return;
 
 			var serviceType = await db.serviceTypes.FirstOrDefaultAsync(s =>
 				s.ServiceTypeName=="food" || s.ServiceTypeName=="Food");
@@ -71,9 +74,11 @@
 				return;
 			}
 
-			var request = new HttpRequestMessage(HttpMethod.Get, serviceType.ServiceTypeAddress);
-			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+		    string urlWithQuery = $"{serviceType.ServiceTypeAddress}?username={_loginSetting.UserName}&password={_loginSetting.Password}";
 
+			var request = new HttpRequestMessage(HttpMethod.Get, serviceType.ServiceTypeAddress);
+			//request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			
 			var response = await _httpClient.SendAsync(request);
 			if (!response.IsSuccessStatusCode)
 			{
