@@ -76,9 +76,11 @@
 
 		    string urlWithQuery = $"{serviceType.ServiceTypeAddress}?username={_loginSetting.UserName}&password={_loginSetting.Password}";
 
-			var request = new HttpRequestMessage(HttpMethod.Get, serviceType.ServiceTypeAddress);
+			var request = new HttpRequestMessage(HttpMethod.Get, urlWithQuery);
+			request.Headers.UserAgent.ParseAdd("Mozilla/5.0");
+
 			//request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-			
+
 			var response = await _httpClient.SendAsync(request);
 			if (!response.IsSuccessStatusCode)
 			{
