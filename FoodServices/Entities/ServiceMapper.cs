@@ -15,7 +15,7 @@ namespace FoodServices.Entities
 				ServiceTitle = menuName,         
 				ServiceDesc = mealName, 
 				location =mealName,
-				ServicePrice = dto.Price,
+				ServicePrice = dto.Price/10,
 				ServiceImg = dto.ImageURL,
 
 				Creator = "system",

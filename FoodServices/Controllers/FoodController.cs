@@ -72,7 +72,10 @@ namespace FoodServices.Controllers
 						{
 							foreach (var item in menu.MealItems)
 							{
-								services.Add(item.ToEntity(meal.MealName, menu.Name, serviceTypeID));
+								if (menu.Name.Contains("IPTV"))
+								{
+									services.Add(item.ToEntity(meal.MealName, menu.Name, serviceTypeID));
+								}
 							}
 						}
 					}

@@ -107,7 +107,11 @@
 					{
 						foreach (var item in menu.MealItems)
 						{
-							services.Add(item.ToEntity(meal.MealName, menu.Name, serviceType.ServiceTypeID));
+							if (menu.Name.Contains("IPTV"))
+							{
+								services.Add(item.ToEntity(meal.MealName, menu.Name, serviceType.ServiceTypeID));
+
+							}
 						}
 					}
 				}
