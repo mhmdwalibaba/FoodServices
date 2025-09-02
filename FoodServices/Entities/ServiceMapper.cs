@@ -1,5 +1,6 @@
 ﻿
 
+using FoodServices.Services;
 using MRKHServices.Persistence.Entites;
 
 namespace FoodServices.Entities
@@ -12,7 +13,7 @@ namespace FoodServices.Entities
 			{
 				ServiceTypeID = serviceTypeID, 
 				ServiceName = dto.Description,   
-				ServiceTitle = menuName,         
+				ServiceTitle = menuName.RemoveWord("IPTV"),         
 				ServiceDesc = mealName, 
 				location =mealName,
 				ServicePrice = dto.Price/10,
