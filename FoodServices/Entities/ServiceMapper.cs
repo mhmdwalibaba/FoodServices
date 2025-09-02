@@ -9,12 +9,13 @@ namespace FoodServices.Entities
 	{
 		public static Service ToEntity(this ServiceDto dto, string mealName, string menuName,int serviceTypeID)
 		{
+			var parts = menuName.SplitMenuName();
 			return new Service
 			{
 				ServiceTypeID = serviceTypeID, 
 				ServiceName = dto.Description,   
-				ServiceTitle = menuName.RemoveWord("IPTV"),         
-				ServiceDesc = mealName, 
+				ServiceTitle = parts.ServiceTitle,         
+				ServiceDesc = parts.ServiceDesc, 
 				location =mealName,
 				ServicePrice = dto.Price/10,
 				ServiceImg = dto.ImageURL,
