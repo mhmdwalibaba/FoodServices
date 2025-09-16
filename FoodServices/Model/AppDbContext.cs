@@ -9,6 +9,7 @@ namespace FoodServices.Model
 		public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
 		public DbSet<Service> services { get; set; }
+
 		public DbSet<FoodServices.Model.ServiceType> serviceTypes { get; set; }
 	}
 }

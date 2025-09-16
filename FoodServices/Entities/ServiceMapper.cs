@@ -20,7 +20,7 @@ namespace FoodServices.Entities
 				ServicePrice = dto.Price/10,
 				ServiceImg = dto.ImageURL,
 
-				Creator = "system",
+				Creator = "ServiceFood",
 				Ctime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
 				Mtime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
 				IsEnabled = 1,

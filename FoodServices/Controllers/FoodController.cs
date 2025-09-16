@@ -99,7 +99,7 @@ namespace FoodServices.Controllers
 	
 	    public async Task<string> GetJwtKey(LoginSetting loginsetting, HttpClient client)
 		{
-			var loginUrl = $"{loginsetting.Url}?username={loginsetting.UserName}&password={loginsetting.Password}";
+			var loginUrl = $"{loginsetting.BaseUrl}?username={loginsetting.UserName}&password={loginsetting.Password}";
 
 			var response = await client.GetAsync(loginUrl);
 
