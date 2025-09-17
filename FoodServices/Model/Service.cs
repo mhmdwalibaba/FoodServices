@@ -55,6 +55,12 @@ namespace MRKHServices.Persistence.Entites
         //[Required (ErrorMessage =" ??? ?? ???? ?????? ")]
         public string? ServiceImg { get; set; }
 
+        public string? Language { get; set; }
+
+        public int? StandardTime { get; set; }
+
+        public int? DeadLine { get; set; }
+
         [Display(Name = "?????")]
         //[Required (ErrorMessage =" ????? ?? ???? ?????? ")]
         public string? ServiceIcon { get; set; }

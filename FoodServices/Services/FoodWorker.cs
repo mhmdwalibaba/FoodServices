@@ -13,6 +13,7 @@
 	using System;
 	using System.Buffers.Text;
 	using System.Net.Http.Headers;
+	using static System.Collections.Specialized.BitVector32;
 
 	public class FoodWorker : BackgroundService
 	{
@@ -50,6 +51,7 @@
 					await FetchSectionServicesAsync(db);
 
 					await FetchFoodServicesAsync(db);
+					await FetchItemServicesAsync(db);
 				}
 				catch (Exception ex)
 				{
@@ -219,6 +221,121 @@
 				_logger.LogInformation("✅ Sections services added to database");
 			}
 		}
+		private async Task FetchItemServicesAsync(AppDbContext db)
+		{
+
+
+
+			string urlWithQuery = $"{_loginSetting.BaseUrl}/{_loginSetting.ItemsUrl}";
+
+			var request = new HttpRequestMessage(HttpMethod.Get, urlWithQuery);
+			request.Headers.UserAgent.ParseAdd("Mozilla/5.0");
+
+
+			var response = await _httpClient.SendAsync(request);
+			if (!response.IsSuccessStatusCode)
+			{
+				_logger.LogWarning("⚠️ Request failed: {StatusCode}", response.StatusCode);
+				return;
+			}
+
+			var json = await response.Content.ReadAsStringAsync();
+			var items = JsonConvert.DeserializeObject<List<ItemDto>>(json);
+
+			if (items != null)
+			{
+				var existingServiceTypes = await db.services.Where(s => s.Creator == "ItemService").ToListAsync();
+				if (existingServiceTypes.Any())
+				{
+					db.services.RemoveRange(existingServiceTypes);
+					await db.SaveChangesAsync();
+					_logger.LogInformation("🗑️ Existing serviceTypes cleared from database");
+				}
+				var services = new List<Service>();
+				foreach (var item in items)
+				{
+					// فارسی
+					if (!string.IsNullOrWhiteSpace(item.Title))
+					{
+						services.Add(new Service
+						{
+							Language = "fa",
+							
+							ServiceName = item.Title.Trim(),
+							ServiceTypeID = await db.serviceTypes
+								.Where(s => s.ServiceTypeLanguageID == "fa" &&
+											s.ServiceTypeParams == item.SectionID.ToString())
+								.Select(s => s.ServiceTypeID)
+								.FirstOrDefaultAsync(),
+							StandardTime=item.StandardTime,
+							DeadLine=item.DeadLine,
+							ServiceDesc=item.SectionName,
+							IsEnabled = 1,
+							IsDeleted = item.Del == true ? 1 : 0,
+							Creator = "ItemService",
+							Ctime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+							Mtime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+
+						});
+					}
+
+					// عربی
+					if (!string.IsNullOrWhiteSpace(item.NameArabic))
+					{
+						services.Add(new Service
+						{
+							Language = "ar",
+
+							ServiceName = item.NameArabic.Trim(),
+							ServiceTypeID = await db.serviceTypes
+									.Where(s => s.ServiceTypeLanguageID == "ar" &&
+												s.ServiceTypeParams == item.SectionID.ToString())
+									.Select(s => s.ServiceTypeID)
+									.FirstOrDefaultAsync(),
+							StandardTime = item.StandardTime,
+							DeadLine = item.DeadLine,
+							ServiceDesc = item.SectionName,
+							IsEnabled = 1,
+							IsDeleted = item.Del == true ? 1 : 0,
+							Creator = "ItemService",
+							Ctime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+							Mtime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+
+						});
+					}
+
+					// انگلیسی
+					if (!string.IsNullOrWhiteSpace(item.NameEnglish))
+					{
+						services.Add(new Service
+						{
+							Language = "en",
+
+							ServiceName = item.NameEnglish.Trim(),
+							ServiceTypeID = await db.serviceTypes
+										.Where(s => s.ServiceTypeLanguageID == "en" &&
+													s.ServiceTypeParams == item.SectionID.ToString())
+										.Select(s => s.ServiceTypeID)
+										.FirstOrDefaultAsync(),
+							StandardTime = item.StandardTime,
+							DeadLine = item.DeadLine,
+							ServiceDesc = item.SectionName,
+							IsEnabled = 1,
+							IsDeleted = item.Del == true ? 1 : 0,
+							Creator = "ItemService",
+							Ctime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+							Mtime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+
+						});
+					}
+				}
+
+				db.services.AddRange(services);
+				await db.SaveChangesAsync();
+				_logger.LogInformation("✅ items services added to database");
+			}
+		}
+
 
 
 		private async Task<string> GetJwtKey(LoginSetting loginsetting, HttpClient client)
@@ -232,6 +349,18 @@
 			var json = JObject.Parse(content);
 			return json["token"]?.ToString() ?? "";
 		}
+
+		//this function for getServiceTypeId by section and serviceTyoe
+		private async Task<int> GetServiceTypeID(string sectionID, string serviceType,AppDbContext db) {
+			var serviceTypeId = await db.serviceTypes
+				.Where(s => s.ServiceTypeLanguageID == "fa" &&
+							s.ServiceTypeParams == sectionID)
+				.Select(s => s.ServiceTypeID)
+				.FirstOrDefaultAsync(); 
+
+			return serviceTypeId;
+		}
+
 	}
 
 }
